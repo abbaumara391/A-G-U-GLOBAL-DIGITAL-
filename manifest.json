@@ -1,0 +1,17 @@
+{
+  "name": "A G U GLOBAL DIGITAL",
+  "short_name": "AGU GLOBAL",
+  "description": "One world. One wallet. Unlimited possibilities.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f7fb",
+  "theme_color": "#071b32",
+  "categories": [
+    "finance",
+    "business",
+    "utilities"
+  ],
+  "icons": []
+}
