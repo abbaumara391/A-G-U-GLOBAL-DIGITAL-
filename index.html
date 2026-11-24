@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071b32">
+  <meta name="description" content="A G U GLOBAL DIGITAL — One world. One wallet. Unlimited possibilities.">
+
+  <title>A G U GLOBAL DIGITAL</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+
+<body>
+
+<div class="app-shell">
+
+  <header class="topbar">
+
+    <a class="brand" href="#">
+      <span class="brand-mark">AGU</span>
+
+      <span>
+        <b>A G U</b>
+        <small>GLOBAL DIGITAL</small>
+      </span>
+    </a>
+
+    <div class="top-actions">
+      <span class="status-dot">SYSTEM ONLINE</span>
+      <button id="logoutBtn" class="btn btn-ghost hidden">
+        Sign out
+      </button>
+    </div>
+
+  </header>
+
+  <main>
+
+    <!-- AUTHENTICATION -->
+
+    <section id="authView" class="auth-layout">
+
+      <div class="hero-panel">
+
+        <div class="eyebrow">GLOBAL DIGITAL SERVICES</div>
+
+        <h1>
+          One world.<br>
+          <em>One wallet.</em><br>
+          Unlimited possibilities.
+        </h1>
+
+        <p>
+          Manage digital services from one secure dashboard.
+          Start with your account and explore the services
+          available on the platform.
+        </p>
+
+        <div class="hero-pills">
+          <span>Secure account</span>
+          <span>Clear records</span>
+          <span>Global vision</span>
+        </div>
+
+        <div class="hero-foot">
+          A G U GLOBAL DIGITAL
+          <span>•</span>
+          BUILT FOR EVERYWHERE
+        </div>
+
+      </div>
+
+      <div class="auth-card">
+
+        <div class="tabs">
+
+          <button class="tab active" data-tab="login">
+            Sign in
+          </button>
+
+          <button class="tab" data-tab="signup">
+            Create account
+          </button>
+
+        </div>
+
+        <div
+          id="authMessage"
+          class="message hidden"
+          role="status">
+        </div>
+
+        <!-- LOGIN FORM -->
+
+        <form id="loginForm" class="auth-form">
+
+          <h2>Welcome back</h2>
+
+          <p class="muted">
+            Sign in to access your dashboard.
+          </p>
+
+          <label>
+            Email address
+
+            <input
+              type="email"
+              id="loginEmail"
+              autocomplete="email"
+              required
+              placeholder="you@example.com">
+          </label>
+
+          <label>
+            Password
+
+            <input
+              type="password"
+              id="loginPassword"
+              autocomplete="current-password"
+              required
+              placeholder="Enter your password">
+          </label>
+
+          <button
+            class="btn btn-primary full"
+            type="submit">
+            Sign in securely
+          </button>
+
+        </form>
+
+        <!-- REGISTRATION FORM -->
+
+        <form id="signupForm" class="auth-form hidden">
+
+          <h2>Create your account</h2>
+
+          <p class="muted">
+            Your account starts with a personal dashboard.
+          </p>
+
+          <label>
+            Full name
+
+            <input
+              id="signupName"
+              autocomplete="name"
+              required
+              maxlength="100"
+              placeholder="Your full name">
+          </label>
+
+          <label>
+            Email address
+
+            <input
+              type="email"
+              id="signupEmail"
+              autocomplete="email"
+              required
+              placeholder="you@example.com">
+          </label>
+
+          <label>
+            Phone number
+
+            <input
+              type="tel"
+              id="signupPhone"
+              autocomplete="tel"
+              required
+              maxlength="24"
+              placeholder="+234...">
+          </label>
+
+          <label>
+            Password
+
+            <input
+              type="password"
+              id="signupPassword"
+              autocomplete="new-password"
+              minlength="8"
+              required
+              placeholder="At least 8 characters">
+          </label>
+
+          <button
+            class="btn btn-primary full"
+            type="submit">
+            Create account
+          </button>
+
+          <small class="muted">
+            You may need to confirm your email before signing in.
+          </small>
+
+        </form>
+
+        <p class="secure-note">
+          Your password is handled by Supabase Authentication.
+          Never share your password or verification codes.
+        </p>
+
+      </div>
+
+    </section>
+
+    <!-- CUSTOMER DASHBOARD -->
+
+    <section id="dashboardView" class="hidden">
+
+      <div class="welcome-row">
+
+        <div>
+
+          <div class="eyebrow">
+            YOUR CONTROL CENTRE
+          </div>
+
+          <h1>
+            Welcome,
+            <span id="userName">Member</span>
+          </h1>
+
+          <p class="muted">
+            Your digital services, account and activity in one place.
+          </p>
+
+        </div>
+
+        <div class="member-badge">
+
+          <span class="avatar" id="avatar">A</span>
+
+          <span>
+            <b>Customer account</b>
+            <small id="userEmail"></small>
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="notice">
+
+        <b>Platform status:</b>
+
+        Account and dashboard foundation is active.
+
+        Live payments, airtime delivery, bills and crypto transfers
+        are not enabled yet.
+
+        Do not send money to this platform until an officially
+        verified payment channel is launched.
+
+      </div>
+
+      <!-- ACCOUNT SUMMARY -->
+
+      <div class="summary-grid">
+
+        <article class="balance-card">
+
+          <div class="card-top">
+            <span>NGN WALLET</span>
+            <span class="live-label">PERSONAL</span>
+          </div>
+
+          <div class="balance" id="walletBalance">
+            ₦0.00
+          </div>
+
+          <p>Available ledger balance</p>
+
+          <div class="balance-actions">
+
+            <button class="btn btn-light" disabled>
+              Fund wallet · Coming soon
+            </button>
+
+            <button class="btn btn-outline-light" disabled>
+              Withdraw · Coming soon
+            </button>
+
+          </div>
+
+        </article>
+
+        <article class="mini-stat">
+
+          <span class="stat-icon">↗</span>
+
+          <small>Transactions</small>
+
+          <strong id="transactionCount">0</strong>
+
+          <span class="muted">
+            Recorded activity
+          </span>
+
+        </article>
+
+        <article class="mini-stat">
+
+          <span class="stat-icon">◎</span>
+
+          <small>Account status</small>
+
+          <strong class="green-text">
+            Active
+          </strong>
+
+          <span class="muted">
+            Authentication connected
+          </span>
+
+        </article>
+
+      </div>
+
+      <!-- DIGITAL SERVICES -->
+
+      <section class="section-block">
+
+        <div class="section-heading">
+
+          <div>
+
+            <div class="eyebrow">
+              EXPLORE THE PLATFORM
+            </div>
+
+            <h2>Digital services</h2>
+
+          </div>
+
+          <span class="coming-tag">
+            Availability varies
+          </span>
+
+        </div>
+
+        <div id="servicesGrid" class="services-grid">
+
+          <article class="service-card">
+            <span class="service-icon">▤</span>
+            <b>Airtime & Data</b>
+            <small>Mobile top-ups and data bundles</small>
+            <span class="service-state">Planned</span>
+          </article>
+
+          <article class="service-card">
+            <span class="service-icon">ϟ</span>
+            <b>Bills & Utilities</b>
+            <small>Electricity and TV subscriptions</small>
+            <span class="service-state">Planned</span>
+          </article>
+
+          <article class="service-card">
+            <span class="service-icon">▣</span>
+            <b>Education PINs</b>
+            <small>WAEC, NECO, JAMB and more</small>
+            <span class="service-state">Planned</span>
+          </article>
+
+          <article class="service-card">
+            <span class="service-icon">◇</span>
+            <b>Gift Cards</b>
+            <small>Digital gift card services</small>
+            <span class="service-state">Planned</span>
+          </article>
+
+          <article class="service-card">
+            <span class="service-icon">₿</span>
+            <b>Crypto Dashboard</b>
+            <small>Market information and test tools</small>
+            <span class="service-state">Test phase</span>
+          </article>
+
+          <article class="service-card">
+            <span class="service-icon">⇄</span>
+            <b>Global Payments</b>
+            <small>Supported international payment options</small>
+            <span class="service-state">Planned</span>
+          </article>
+
+        </div>
+
+      </section>
+
+      <!-- TRANSACTION HISTORY -->
+
+      <section class="section-block">
+
+        <div class="section-heading">
+
+          <div>
+            <div class="eyebrow">YOUR ACCOUNT</div>
+            <h2>Recent transactions</h2>
+          </div>
+
+        </div>
+
+        <div class="table-wrap">
+
+          <table>
+
+            <thead>
+              <tr>
+                <th>Reference</th>
+                <th>Service</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+
+            <tbody id="transactionsBody">
+
+              <tr>
+                <td colspan="5" class="empty">
+                  No transactions recorded yet.
+                </td>
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </section>
+
+      <footer class="dashboard-footer">
+
+        A G U GLOBAL DIGITAL
+
+        <span>
+          ONE WORLD. ONE WALLET. UNLIMITED POSSIBILITIES.
+        </span>
+
+        <small>
+          Prototype foundation · Real services will be enabled
+          only after secure provider and payment integrations.
+        </small>
+
+      </footer>
+
+    </section>
+
+  </main>
+
+</div>
+
+<!-- LOADING SCREEN -->
+
+<div id="loading" class="loading hidden">
+
+  <span class="spinner"></span>
+
+  <span>Connecting securely…</span>
+
+</div>
+
+</body>
+</html>
