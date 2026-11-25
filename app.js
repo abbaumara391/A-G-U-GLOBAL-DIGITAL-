@@ -68,16 +68,16 @@ if (element) {
 // ==========================================
 
 function safe(value) {
-return String(value ?? "").replace(
-/[&<>"']/g,
-character => ({
-"&": "&",
-"<": "<",
-">": ">",
-'"': """,
-"'": "'"
-})[character]
-);
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    character => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[character]
+  );
 }
 
 // ==========================================
