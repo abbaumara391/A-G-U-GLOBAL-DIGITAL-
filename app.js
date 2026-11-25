@@ -245,7 +245,7 @@ return data.length;
 
 // ==========================================
 // LOAD WALLET BALANCE
-// SECURE EDGE FUNCTION VERSION
+// AUTHENTICATED EDGE FUNCTION VERSION
 // ==========================================
 
 async function loadWallet(userId) {
@@ -254,6 +254,28 @@ async function loadWallet(userId) {
 
   try {
 
+    // STEP 1: CHECK CUSTOMER SESSION
+    const {
+      data: sessionData,
+      error: sessionError
+    } = await db.auth.getSession();
+
+    if (sessionError || !sessionData.session) {
+      console.error("Customer session not found.");
+      return;
+    }
+
+    // STEP 2: VERIFY CUSTOMER ID
+    const loggedInUserId = sessionData.session.user.id;
+
+    if (loggedInUserId !== userId) {
+      console.error("Customer account verification failed.");
+      return;
+    }
+
+    console.log("Customer authentication check passed.");
+
+    // STEP 3: REQUEST WALLET OVERVIEW
     const {
       data,
       error
@@ -265,57 +287,43 @@ async function loadWallet(userId) {
     );
 
     if (error) {
-      console.error(
-        "Wallet Edge Function error:",
-        error
-      );
+      console.error("Wallet Edge Function error:", error.message);
       return;
     }
 
+    // STEP 4: VERIFY RESPONSE
     if (!data || !data.success) {
-      console.error(
-        "Wallet response error:",
-        data?.message
-      );
+      console.error("Wallet response error:", data?.message);
       return;
     }
 
     if (data.account_id !== userId) {
-      console.error(
-        "Wallet account verification failed."
-      );
+      console.error("Wallet account verification failed.");
       return;
     }
 
+    // STEP 5: READ NGN WALLET
     const ngnWallet = (data.wallets || []).find(
       wallet => wallet.currency === "NGN"
     );
 
-    const balance = Number(
-      ngnWallet?.balance || 0
-    );
+    const balance = Number(ngnWallet?.balance || 0);
 
     if (!Number.isFinite(balance)) {
       console.error("Invalid wallet balance.");
       return;
     }
 
-    $("walletBalance").textContent =
-      money(balance);
+    $("walletBalance").textContent = money(balance);
 
-    console.log(
-      "Secure wallet overview loaded successfully."
-    );
+    console.log("Wallet overview loaded successfully.");
 
   } catch (error) {
 
-    console.error(
-      "Wallet loading failed:",
-      error
-    );
-
+  console.error("Wallet loading failed:", error.message);
+    
   }
-}
+}  
 
 // ==========================================
 // LOAD AVAILABLE SERVICES
