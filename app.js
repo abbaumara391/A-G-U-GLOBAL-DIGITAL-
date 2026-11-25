@@ -317,14 +317,15 @@ async function loadWallet(userId) {
     $("walletBalance").textContent = money(balance);
 
     console.log("Wallet overview loaded successfully.");
-   console.log("Wallet verification:", {
-  success: data.success,
-  accountMatches: data.account_id === userId,
-  walletCount: (data.wallets || []).length,
-  ngnWalletFound: (data.wallets || []).some(
+   alert("WALLET VERIFICATION\n\n" +
+  "Success: " + data.success + "\n" +
+  "Customer matches: " + (data.account_id === userId) + "\n" +
+  "Wallet count: " + (data.wallets || []).length + "\n" +
+  "NGN wallet found: " +
+  (data.wallets || []).some(
     wallet => wallet.currency === "NGN"
   )
-});
+);
   } catch (error) {
 
   console.error("Wallet loading failed:", error.message);
