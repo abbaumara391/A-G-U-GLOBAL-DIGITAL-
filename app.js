@@ -474,6 +474,38 @@ async function importGlobalCountries() {
 
   }
 }
+
+// ==========================================
+// ADMINISTRATOR PANEL ACCESS
+// ==========================================
+
+const AGU_ADMIN_ID =
+  "4df784df-05a3-48ec-94b6-6ce6d5ae5a09";
+
+function configureAdminPanel(user) {
+
+  const panel = $("adminPanel");
+
+  if (!panel) return;
+
+  const isAdmin = user.id === AGU_ADMIN_ID;
+
+  panel.classList.toggle("hidden", !isAdmin);
+}
+
+// ==========================================
+// COUNTRY IMPORT BUTTON
+// ==========================================
+
+const importButton = $("importCountriesBtn");
+
+if (importButton) {
+
+  importButton.addEventListener("click", async () => {
+    await importGlobalCountries();
+  });
+
+}
   
 // ==========================================
 // MAIN DASHBOARD
