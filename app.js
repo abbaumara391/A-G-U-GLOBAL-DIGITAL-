@@ -475,6 +475,64 @@ async function importGlobalCountries() {
   }
 }
 
+async function importGlobalCurrencies() {
+  const adminId = "4df784df-05a3-48ec-94b6-6ce6d5ae5a09";
+
+  const { data: sessionData, error: sessionError } =
+    await db.auth.getSession();
+
+  if (sessionError || !sessionData.session) {
+    alert("Please sign in again.");
+    return;
+  }
+
+  if (sessionData.session.user.id !== adminId) {
+    alert("Administrator access required.");
+    return;
+  }
+
+  const confirmed = confirm(
+    "Import global currency reference records into staging? Production currencies and ECO will not be activated."
+  );
+
+  if (!confirmed) return;
+
+  showLoading(true);
+
+  try {
+    const { data, error } = await db.functions.invoke(
+      "agu-import-currencies",
+      { body: {} }
+    );
+
+    if (error) {
+      console.error("Currency import error:", error);
+      alert("Currency import failed. Check the Edge Function logs.");
+      return;
+    }
+
+    if (!data || !data.success) {
+      alert(data?.error || "Currency import was unsuccessful.");
+      return;
+    }
+
+    alert(
+      "Currency import successful!\n\n" +
+      "Imported: " + data.imported +
+      "\nMatched country currencies: " +
+      data.matched_country_currencies +
+      "\nProduction updated: No" +
+      "\nECO activated: No"
+    );
+
+  } catch (error) {
+    console.error(error);
+    alert("Unable to complete currency import.");
+  } finally {
+    showLoading(false);
+  }
+}
+  
 // ==========================================
 // ADMINISTRATOR PANEL ACCESS
 // ==========================================
