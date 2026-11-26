@@ -217,6 +217,44 @@
 
     <section id="dashboardView" class="hidden">
 
+<!-- ADMINISTRATOR CONTROL PANEL -->
+
+<section id="adminPanel" class="section-block hidden">
+
+  <div class="section-heading">
+    <div>
+      <div class="eyebrow">SECURE ADMINISTRATION</div>
+      <h2>Administrator Control Centre</h2>
+      <p class="muted">
+        Manage the global country catalogue.
+      </p>
+    </div>
+  </div>
+
+  <article class="service-card">
+    <span class="service-icon">🌍</span>
+
+    <b>Global Country Catalogue</b>
+
+    <small>
+      Import country and territory records into the staging
+      database. This does not activate countries or services.
+    </small>
+
+    <button
+      id="importCountriesBtn"
+      class="btn btn-primary"
+      type="button">
+      Import Global Countries
+    </button>
+
+    <span id="countryImportStatus" class="service-state">
+      Awaiting administrator action
+    </span>
+  </article>
+
+</section>
+      
       <div class="welcome-row">
 
         <div>
