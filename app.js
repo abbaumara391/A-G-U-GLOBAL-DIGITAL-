@@ -482,7 +482,7 @@ async function importGlobalCountries() {
 async function loadDashboard(user) {
 
 showDashboard();  
-
+configureAdminPanel(user);
 const email = user.email || "";  
 
 const metadataName =  
