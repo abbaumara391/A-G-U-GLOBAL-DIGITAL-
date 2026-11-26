@@ -564,7 +564,13 @@ if (importButton) {
   });
 
 }
-  
+  const currencyImportButton = $("importCurrenciesBtn");
+
+if (currencyImportButton) {
+  currencyImportButton.addEventListener("click", async () => {
+    await importGlobalCurrencies();
+  });
+}
 // ==========================================
 // MAIN DASHBOARD
 // ==========================================
