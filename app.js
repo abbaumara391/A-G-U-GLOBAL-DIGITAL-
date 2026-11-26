@@ -406,6 +406,76 @@ if (data && data.full_name) {
 }
 
 // ==========================================
+// AGU GLOBAL COUNTRY IMPORT
+// ADMIN ONLY
+// ==========================================
+
+async function importGlobalCountries() {
+
+  const adminId = "4df784df-05a3-48ec-94b6-6ce6d5ae5a09";
+
+  const {
+    data: sessionData,
+    error: sessionError
+  } = await db.auth.getSession();
+
+  if (sessionError || !sessionData.session) {
+    alert("Please sign in again.");
+    return;
+  }
+
+  if (sessionData.session.user.id !== adminId) {
+    alert("Administrator access required.");
+    return;
+  }
+
+  const confirmed = confirm(
+    "Import the global country catalogue into AGU staging? No countries or services will be activated."
+  );
+
+  if (!confirmed) return;
+
+  showLoading(true);
+
+  try {
+
+    const { data, error } = await db.functions.invoke(
+      "agu-import-countries",
+      {
+        body: {}
+      }
+    );
+
+    if (error) {
+      console.error("Country import error:", error);
+      alert("Import request failed. Check the Edge Function logs.");
+      return;
+    }
+
+    if (!data || !data.success) {
+      alert(data?.error || "Country import was unsuccessful.");
+      return;
+    }
+
+    alert(
+      "Country import successful!\n\nImported: " +
+      data.imported +
+      "\nCountries activated: No\nServices activated: No"
+    );
+
+  } catch (error) {
+
+    console.error(error);
+    alert("Unable to complete the country import.");
+
+  } finally {
+
+    showLoading(false);
+
+  }
+}
+  
+// ==========================================
 // MAIN DASHBOARD
 // ==========================================
 
