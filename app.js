@@ -482,3 +482,330 @@ async function startWalletFunding() {
   }
 }
 $("startFundingBtn")?.addEventListener("click", startWalletFunding);
+// ---------------- PAYSTACK RETURN VERIFICATION ----------------
+function getReturnedPaymentReference() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("reference") || params.get("trxref") || "";
+}
+
+function clearPaymentQuery() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("reference");
+    url.searchParams.delete("trxref");
+    url.searchParams.delete("status");
+    window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+  } catch (error) {
+    console.warn("Could not clean callback URL:", error);
+  }
+}
+
+async function verifyReturnedFunding() {
+  const reference = getReturnedPaymentReference();
+  if (!reference) return false;
+
+  clearPaymentQuery();
+
+  const pending = sessionStorage.getItem("agu_pending_funding_reference");
+
+  if (!/^AGU[a-f0-9]{32}$/.test(reference)) {
+    openFundingPanel();
+    setFundingMessage("The returned payment reference is not recognised. No wallet credit was made.", "error");
+    return true;
+  }
+
+  if (pending && pending !== reference) {
+    openFundingPanel();
+    setFundingMessage("The returned reference does not match the checkout started in this browser. No wallet credit was made.", "error");
+    return true;
+  }
+
+  openFundingPanel();
+  $("startFundingBtn").disabled = true;
+  $("startFundingBtn").textContent = "Verifying payment…";
+  setFundingMessage("Checking payment directly with the secure server. Please wait.");
+
+  try {
+    const { data: sessionData, error: sessionError } = await db.auth.getSession();
+
+    if (sessionError || !sessionData?.session?.user) {
+      throw new Error("Your sign-in session is missing. Sign in again before checking this payment.");
+    }
+
+    const { data, error } = await db.functions.invoke("paystack-verify", {
+      body: { reference }
+    });
+
+    if (error) throw new Error(error.message || "The server could not verify this payment.");
+    if (!data?.success) {
+      throw new Error(data?.message || data?.error || "Payment is not confirmed. No wallet credit was made.");
+    }
+
+    sessionStorage.removeItem("agu_pending_funding_reference");
+    await loadDashboard(sessionData.session.user);
+
+    setFundingMessage(
+      "Payment verified successfully by the server. Your wallet overview has been refreshed.",
+      "success"
+    );
+
+    $("startFundingBtn").textContent = "Verified";
+    $("cancelFundingBtn").textContent = "Close";
+
+  } catch (error) {
+    console.error("Paystack verification failed:", error);
+
+    setFundingMessage(
+      `${error.message || "Verification failed."} No wallet credit is confirmed by this page. Keep this reference for support: ${reference}`,
+      "error"
+    );
+
+    $("startFundingBtn").disabled = false;
+    $("startFundingBtn").textContent = "Retry verification";
+    $("startFundingBtn").onclick = () => retryFundingVerification(reference);
+  }
+
+  return true;
+}
+
+async function retryFundingVerification(reference) {
+  const button = $("startFundingBtn");
+  button.disabled = true;
+  button.textContent = "Verifying…";
+  setFundingMessage("Retrying secure server verification…");
+
+  try {
+    const { data: sessionData, error: sessionError } = await db.auth.getSession();
+
+    if (sessionError || !sessionData?.session?.user) {
+      throw new Error("Please sign in again before retrying.");
+    }
+
+    const { data, error } = await db.functions.invoke("paystack-verify", {
+      body: { reference }
+    });
+
+    if (error) throw new Error(error.message || "Verification request failed.");
+    if (!data?.success) {
+      throw new Error(data?.message || data?.error || "Payment is not confirmed.");
+    }
+
+    sessionStorage.removeItem("agu_pending_funding_reference");
+    await loadDashboard(sessionData.session.user);
+
+    setFundingMessage(
+      "Payment verified successfully. Your wallet overview has been refreshed.",
+      "success"
+    );
+
+    button.textContent = "Verified";
+    $("cancelFundingBtn").textContent = "Close";
+
+  } catch (error) {
+    setFundingMessage(
+      `${error.message} No wallet credit is confirmed by this page. Keep your reference for support: ${reference}`,
+      "error"
+    );
+
+    button.disabled = false;
+    button.textContent = "Retry verification";
+  }
+}
+
+// ---------------- DASHBOARD ----------------
+async function loadDashboard(user) {
+  showDashboard();
+  configureAdminPanel(user);
+
+  const email = user.email || "";
+  const metadataName = user.user_metadata?.full_name || "";
+
+  $("userEmail").textContent = email;
+  $("userName").textContent = metadataName || email.split("@")[0] || "Member";
+  $("avatar").textContent =
+    ($("userName").textContent.trim().charAt(0) || "A").toUpperCase();
+
+  $("walletBalance").textContent = money(0);
+  $("transactionCount").textContent = "0";
+  showEmptyTransactions();
+  configureServiceCards();
+
+  try {
+    await loadProfile(user);
+
+    const [count] = await Promise.all([
+      loadTransactions(user.id),
+      loadWallet(user.id)
+    ]);
+
+    $("transactionCount").textContent = String(count);
+  } catch (error) {
+    console.error("Dashboard error:", error);
+  }
+}
+
+// ---------------- LOGIN ----------------
+$("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!db) {
+    showMessage("Configuration error. Check config.js.", true);
+    return;
+  }
+
+  clearMessage();
+  showLoading(true);
+
+  try {
+    const { data, error } = await db.auth.signInWithPassword({
+      email: $("loginEmail").value.trim(),
+      password: $("loginPassword").value
+    });
+
+    if (error) {
+      showMessage(error.message, true);
+      return;
+    }
+
+    await loadDashboard(data.user);
+    await verifyReturnedFunding();
+
+  } catch (error) {
+    showMessage("Login failed. Please try again.", true);
+    console.error(error);
+
+  } finally {
+    showLoading(false);
+  }
+});
+
+// ---------------- REGISTRATION ----------------
+$("signupForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!db) {
+    showMessage("Configuration error. Check config.js.", true);
+    return;
+  }
+
+  clearMessage();
+  showLoading(true);
+
+  const fullName = $("signupName").value.trim();
+  const email = $("signupEmail").value.trim();
+  const phone = $("signupPhone").value.trim();
+  const password = $("signupPassword").value;
+
+  try {
+    const { data, error } = await db.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName, phone },
+        emailRedirectTo: window.location.origin + window.location.pathname
+      }
+    });
+
+    if (error) {
+      showMessage(error.message, true);
+      return;
+    }
+
+    if (data.session && data.user) {
+      await loadDashboard(data.user);
+    } else {
+      showMessage(
+        "Account created successfully. Check your email for the confirmation link. After confirming, return here and sign in."
+      );
+    }
+
+  } catch (error) {
+    showMessage("Registration failed. Please try again.", true);
+    console.error(error);
+
+  } finally {
+    showLoading(false);
+  }
+});
+
+// ---------------- LOGOUT ----------------
+$("logoutBtn").addEventListener("click", async () => {
+  if (!db) return;
+
+  showLoading(true);
+
+  try {
+    const { error } = await db.auth.signOut();
+
+    if (error) {
+      console.error("Logout error:", error);
+      showMessage(error.message, true);
+      return;
+    }
+
+    closeServicePanel();
+    closeFundingPanel();
+    showAuth();
+
+  } finally {
+    showLoading(false);
+  }
+});
+
+// ---------------- SESSION INITIALIZATION ----------------
+async function initializeApp() {
+  if (!clientReady) {
+    showAuth();
+    showMessage("Supabase configuration is missing. Check config.js.", true);
+    return;
+  }
+
+  showLoading(true);
+
+  try {
+    const {
+      data: { session },
+      error
+    } = await db.auth.getSession();
+
+    if (error) throw error;
+
+    if (session?.user) {
+      await loadDashboard(session.user);
+      await verifyReturnedFunding();
+    } else {
+      showAuth();
+    }
+
+  } catch (error) {
+    console.error("Session error:", error);
+    showAuth();
+
+  } finally {
+    showLoading(false);
+  }
+
+  db.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" && session?.user) {
+      setTimeout(() => loadDashboard(session.user), 0);
+    }
+
+    if (event === "SIGNED_OUT") {
+      closeServicePanel();
+      closeFundingPanel();
+      showAuth();
+    }
+  });
+}
+
+// ---------------- SERVICE WORKER ----------------
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(error =>
+      console.error("Service worker registration failed:", error)
+    );
+  });
+}
+
+initializeApp();
+})();
